@@ -1,7 +1,9 @@
 use std::fmt::{Debug, Display};
 
-use crate::{blocks::Block, canvas::Canvas};
+use crate::{block::Block, canvas::Canvas};
 use rand::{random, random_range};
+
+const POINTS_PER_LINE_CLEAR: usize = 50;
 
 pub struct Game {
     pub canvas: Canvas,
@@ -9,13 +11,6 @@ pub struct Game {
 }
 
 impl Game {
-    pub fn new() -> Self {
-        Self {
-            canvas: Canvas::default(),
-            score: 0,
-        }
-    }
-
     pub fn reset(&mut self) -> &mut Self {
         self.canvas.clear_all();
         self.score = 0;
@@ -46,26 +41,24 @@ impl Game {
         };
 
         self.canvas.add(&playable);
-        let removed = self.canvas.clear_completed_lines();
-        self.score += removed;
+        let lines_cleared = self.canvas.clear_completed_lines();
+        self.update_score(lines_cleared);
+
         Ok(())
     }
 
-    /// Attempt to place a block and increment the game score if necessary.
-    pub fn try_place_block(&mut self, block: &Block, row: i32, column: i32) -> &mut Self {
-        if let Some(playable) = self.canvas.try_make_playable(block, row, column) {
-            self.canvas.add(&playable);
-            let removed = self.canvas.clear_completed_lines();
-            self.score += removed;
-        }
-
+    fn update_score(&mut self, lines_cleared: usize) -> &mut Self {
+        self.score += lines_cleared * POINTS_PER_LINE_CLEAR;
         self
     }
 }
 
 impl Default for Game {
     fn default() -> Self {
-        Game::new()
+        Self {
+            canvas: Canvas::default(),
+            score: 0,
+        }
     }
 }
 
@@ -79,9 +72,4 @@ impl Debug for Game {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.canvas.fmt(f)
     }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::Game;
 }

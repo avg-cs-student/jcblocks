@@ -1,6 +1,6 @@
 use std::fmt;
 
-use crate::blocks::Block;
+use crate::block::Block;
 
 #[derive(Debug, Clone)]
 pub enum PointStatus {
@@ -16,6 +16,7 @@ pub struct PlayableBlock {
 }
 
 /// Canvas holds the state of the board.
+#[derive(Clone)]
 pub struct Canvas {
     pub columns: usize,
     pub rows: usize,
@@ -236,7 +237,7 @@ impl fmt::Debug for Canvas {
 
 #[cfg(test)]
 mod tests {
-    use crate::blocks::*;
+    use crate::block::*;
 
     use super::*;
 
@@ -400,4 +401,25 @@ mod tests {
             Point { x: 7, y: 5 },
         ]
     );
+
+    #[test]
+    fn can_clone() {
+        let mut original = Canvas::new(3, 3);
+        original.contents[0] = PointStatus::Occupied;
+        original.contents[1] = PointStatus::Occupied;
+        original.contents[2] = PointStatus::Occupied;
+
+        let duplicate = original.clone();
+        for i in 0..3 {
+            if let PointStatus::Occupied = duplicate.contents[i] {}
+            else {
+                assert!(false, "Expected contents to be cloned");
+            }
+        }
+
+        if let PointStatus::Empty = duplicate.contents[3] {}
+        else {
+            assert!(false, "Expected contents to be cloned");
+        }
+    }
 }

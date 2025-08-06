@@ -5,4 +5,4 @@ pub mod game;
 pub mod canvas;
 
 /// Playable blocks.
-pub mod blocks;
+pub mod block;
