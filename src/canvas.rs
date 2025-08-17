@@ -11,8 +11,8 @@ pub enum PointStatus {
 
 pub struct PlayableBlock {
     block: Block,
-    row: usize,
-    column: usize,
+    row: i32,
+    column: i32,
 }
 
 /// Canvas holds the state of the board.
@@ -27,6 +27,7 @@ pub const DEFAULT_CANVAS_HEIGHT: usize = 8;
 pub const DEFAULT_CANVAS_WIDTH: usize = 8;
 
 impl Canvas {
+    /// Create an empty board.
     pub fn new(rows: usize, columns: usize) -> Self {
         Canvas {
             columns,
@@ -35,10 +36,13 @@ impl Canvas {
         }
     }
 
+    /// Returns a the status for each point on the canvas.
     pub fn contents(&self) -> Vec<PointStatus> {
+        // TODO: There's surely a more efficient way to share the vec immutably.
         self.contents.clone()
     }
 
+    /// Remove all pieces from the canvas.
     pub fn clear_all(&mut self) -> &mut Self {
         for space in self.contents.iter_mut() {
             *space = PointStatus::Empty;
@@ -47,6 +51,9 @@ impl Canvas {
         self
     }
 
+    /// Translate from row/col domain to 1d-array with stride domain.
+    ///
+    /// Returns `None` for invalid positions.
     fn position_to_index(&self, x: i32, y: i32) -> Option<usize> {
         if x < 0 || y < 0 || x >= self.columns as i32 || y >= self.rows as i32 {
             return None;
@@ -55,6 +62,8 @@ impl Canvas {
         Some(self.columns * y as usize + x as usize)
     }
 
+    /// Returns true if `block`'s coordinates would fit if the origin of the block was placed at
+    /// the specified row/column.
     pub fn can_fit_at(&self, block: &Block, row: i32, column: i32) -> bool {
         for p in block.coordinates() {
             if let Some(index) = self.position_to_index(column + p.x, row + p.y) {
@@ -67,18 +76,23 @@ impl Canvas {
         true
     }
 
-    pub fn can_fit(&self, block: &Block) -> bool {
-        for row in 0..self.rows {
-            for col in 0..self.columns {
-                if self.can_fit_at(block, col as i32, row as i32) {
-                    return true;
+    pub fn can_fit(&self, block: &Block) -> Option<PlayableBlock> {
+        for column in 0..self.columns {
+            for row in 0..self.rows {
+                if self.can_fit_at(&block, row as i32, column as i32) {
+                    return Some(PlayableBlock {
+                        block: block.clone(),
+                        row: row as i32,
+                        column: column as i32,
+                    });
                 }
             }
         }
 
-        false
+        None
     }
 
+    /// Returns None if the block is not playable.
     pub fn try_make_playable(&self, block: &Block, row: i32, column: i32) -> Option<PlayableBlock> {
         if !self.can_fit_at(block, row, column) {
             return None;
@@ -86,15 +100,16 @@ impl Canvas {
 
         Some(PlayableBlock {
             block: block.clone(),
-            row: row as usize,
-            column: column as usize,
+            row,
+            column,
         })
     }
 
+    /// Add `block` to the canvas.
     pub fn add(&mut self, block: &PlayableBlock) -> &mut Self {
         for p in block.block.coordinates() {
             if let Some(index) =
-                self.position_to_index(block.column as i32 + p.x, block.row as i32 + p.y)
+                self.position_to_index(block.column + p.x, block.row + p.y)
             {
                 self.contents[index] = PointStatus::Occupied;
             }
@@ -411,14 +426,14 @@ mod tests {
 
         let duplicate = original.clone();
         for i in 0..3 {
-            if let PointStatus::Occupied = duplicate.contents[i] {}
-            else {
+            if let PointStatus::Occupied = duplicate.contents[i] {
+            } else {
                 assert!(false, "Expected contents to be cloned");
             }
         }
 
-        if let PointStatus::Empty = duplicate.contents[3] {}
-        else {
+        if let PointStatus::Empty = duplicate.contents[3] {
+        } else {
             assert!(false, "Expected contents to be cloned");
         }
     }
