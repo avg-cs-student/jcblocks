@@ -9,6 +9,7 @@ pub enum PointStatus {
     MarkedForRemoval,
 }
 
+#[derive(Debug, Clone)]
 pub struct PlayableBlock {
     block: Block,
     row: i32,
@@ -37,17 +38,13 @@ impl Canvas {
     }
 
     /// Returns a the status for each point on the canvas.
-    pub fn contents(&self) -> Vec<PointStatus> {
-        // TODO: There's surely a more efficient way to share the vec immutably.
-        self.contents.clone()
+    pub fn contents(&self) -> &Vec<PointStatus> {
+        &self.contents
     }
 
     /// Remove all pieces from the canvas.
     pub fn clear_all(&mut self) -> &mut Self {
-        for space in self.contents.iter_mut() {
-            *space = PointStatus::Empty;
-        }
-
+        self.contents.fill(PointStatus::Empty);
         self
     }
 
@@ -66,10 +63,12 @@ impl Canvas {
     /// the specified row/column.
     pub fn can_fit_at(&self, block: &Block, row: i32, column: i32) -> bool {
         for p in block.coordinates() {
-            if let Some(index) = self.position_to_index(column + p.x, row + p.y) {
-                if let PointStatus::Occupied = self.contents[index] {
-                    return false;
-                }
+            let Some(index) = self.position_to_index(column + p.x, row + p.y) else {
+                return false;
+            };
+
+            if let PointStatus::Occupied = self.contents[index] {
+                return false;
             }
         }
 
@@ -108,9 +107,7 @@ impl Canvas {
     /// Add `block` to the canvas.
     pub fn add(&mut self, block: &PlayableBlock) -> &mut Self {
         for p in block.block.coordinates() {
-            if let Some(index) =
-                self.position_to_index(block.column + p.x, block.row + p.y)
-            {
+            if let Some(index) = self.position_to_index(block.column + p.x, block.row + p.y) {
                 self.contents[index] = PointStatus::Occupied;
             }
         }
@@ -416,6 +413,71 @@ mod tests {
             Point { x: 7, y: 5 },
         ]
     );
+
+    #[test]
+    fn cant_fit_when_full() {
+        let mut original = Canvas::new(8, 8);
+        for c in original.contents.iter_mut() {
+            *c = PointStatus::Occupied;
+        }
+
+        let all_blocks: [Block; 14] = [
+            Block::rectangle(3, 3),
+            Block::rectangle(3, 2),
+            Block::rectangle(2, 3),
+            Block::rectangle(2, 2),
+            Block::rectangle(1, 1),
+            Block::tee(),
+            Block::line(2),
+            Block::line(3),
+            Block::line(4),
+            Block::line(5),
+            Block::elle(3, 3),
+            Block::elle(3, 2),
+            Block::elle(2, 3),
+            Block::elle(2, 2),
+        ];
+        for block in all_blocks {
+            assert!(original.can_fit(&block).is_none());
+        }
+    }
+
+    #[test]
+    fn can_fit_when_barely_empty() {
+        let mut original = Canvas::new(8, 8);
+        original.contents.fill(PointStatus::Occupied);
+        original.contents[63] = PointStatus::Empty;
+
+        let wont_fit: [Block; 13] = [
+            Block::rectangle(3, 3),
+            Block::rectangle(3, 2),
+            Block::rectangle(2, 3),
+            Block::rectangle(2, 2),
+            Block::tee(),
+            Block::line(2),
+            Block::line(3),
+            Block::line(4),
+            Block::line(5),
+            Block::elle(3, 3),
+            Block::elle(3, 2),
+            Block::elle(2, 3),
+            Block::elle(2, 2),
+        ];
+
+        for block in wont_fit {
+            assert!(
+                original.can_fit(&block).is_none(),
+                "Expected {} not to fit!",
+                block
+            );
+        }
+
+        // the only one that should fit
+        assert!(
+            original.can_fit(&Block::rectangle(1, 1)).is_some(),
+            "Expected 1x1 to fit!"
+        );
+    }
 
     #[test]
     fn can_clone() {
