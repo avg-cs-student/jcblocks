@@ -3,7 +3,7 @@
 use std::fmt::{Debug, Display};
 
 use crate::{block::Block, canvas::Canvas};
-use rand::{random, random_range, rng, seq::SliceRandom, thread_rng};
+use rand::{rng, seq::SliceRandom};
 
 const POINTS_PER_LINE_CLEAR: usize = 50;
 
@@ -40,7 +40,7 @@ impl Game {
     }
 
     pub fn naive_generate_block(&self, canvas: &mut Canvas) -> Option<Block> {
-        let mut all_blocks: [Block; 14] = [
+        let mut all_blocks = [
             Block::rectangle(3, 3),
             Block::rectangle(3, 2),
             Block::rectangle(2, 3),
@@ -55,16 +55,18 @@ impl Game {
             Block::elle(3, 2),
             Block::elle(2, 3),
             Block::elle(2, 2),
+            Block::diagonal(2),
+            Block::diagonal(3),
+            Block::diagonal(4),
         ];
 
         let mut rng = rng();
         all_blocks.shuffle(&mut rng);
-
-        for mut block in all_blocks {
+        for block in &mut all_blocks {
             for _ in (0..360).step_by(90) {
                 if let Some(playable) = canvas.can_fit(&block) {
                     canvas.add(&playable);
-                    return Some(block);
+                    return Some(block.to_owned());
                 }
                 block.rotate_left();
             }
