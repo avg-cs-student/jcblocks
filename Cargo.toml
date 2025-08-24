@@ -2,6 +2,11 @@
 name = "jcblocks"
 version = "0.1.0"
 edition = "2024"
+authors = ["Justin Cromer"]
+description = "Components for constructing block games such as Tetris/BlockBlast."
+readme = "README.md"
+repository = "https://github.com/avg-cs-student/jcblocks"
+license = "MIT"
 
 [dependencies]
 rand = "0.9.2"
