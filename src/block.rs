@@ -111,6 +111,7 @@ pub struct Block {
 }
 
 impl Block {
+    /// Tee constructor. Tees are always the same size.
     pub fn tee() -> Self {
         let mut coords = Vec::new();
 
@@ -195,8 +196,6 @@ impl Block {
             variant: Variant::Elle,
         }
     }
-
-    // TODO: these could just be a trait that make the game extensible.
 
     pub fn coordinates(&self) -> &Vec<Point> {
         &self.coords

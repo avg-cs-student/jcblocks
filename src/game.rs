@@ -1,4 +1,4 @@
-//! `game.rs` holds high-level game logic using components defined elsewhere in the crate.
+//! Holds high-level game logic using components defined elsewhere in the crate.
 
 use std::fmt::{Debug, Display};
 
@@ -10,10 +10,6 @@ const POINTS_PER_LINE_CLEAR: usize = 50;
 pub struct Game {
     pub canvas: Canvas,
     pub score: usize,
-}
-
-pub enum BlockGenerationStrategy {
-    Naive,
 }
 
 impl Game {
