@@ -32,6 +32,7 @@ impl Game {
             }
         }
 
+        blocks.reverse();
         Some(blocks)
     }
 
